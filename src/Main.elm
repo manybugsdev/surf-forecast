@@ -8,6 +8,7 @@ module Main exposing (..)
 
 import Browser
 import Html exposing (Html, button, div, text)
+import Html.Attributes exposing (class)
 import Html.Events exposing (onClick)
 
 
@@ -55,10 +56,15 @@ update msg model =
 -- VIEW
 
 
+myButton : List (Html.Attribute msg) -> List (Html msg) -> Html msg
+myButton attrs doms =
+    button (class "bg-black" :: attrs) doms
+
+
 view : Model -> Html Msg
 view model =
     div []
-        [ button [ onClick Decrement ] [ text "-" ]
+        [ myButton [ onClick Decrement ] [ text "-" ]
         , div [] [ text (String.fromInt model) ]
         , button [ onClick Increment ] [ text "+" ]
         ]
