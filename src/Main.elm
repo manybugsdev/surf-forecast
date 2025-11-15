@@ -63,7 +63,7 @@ myButton attrs doms =
 
 view : Model -> Html Msg
 view model =
-    div []
+    div [ class "w-full min-h-dvh bg-indigo-950 color-white" ]
         [ myButton [ onClick Decrement ] [ text "-" ]
         , div [] [ text (String.fromInt model) ]
         , button [ onClick Increment ] [ text "+" ]
