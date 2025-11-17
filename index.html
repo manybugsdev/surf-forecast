@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Waro</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+      :root {
+        --primary: #e83c91;
+        --secondary: #ff8fb7;
+        --accent: #f8f4ec;
+        --base: #43334c;
+      }
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background-color: var(--base);
+        color: var(--accent);
+        min-height: 100dvh;
+        display: flex;
+        justify-content: center;
+      }
+      .wrap {
+        margin: auto;
+        width: min(100dvw, 100dvh * 4 / 3);
+        height: min(100dvh, 100dvw * 3 / 4);
+      }
+      svg {
+        width: 100%;
+        height: 100%;
+        background-color: black;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <svg viewBox="0,0,4,3"></svg>
+    </div>
+    <script>
+      const xy = (event) => [
+        (4 * event.offsetX) / event.target.clientWidth,
+        (3 * event.offsetY) / event.target.clientHeight,
+      ];
+      const $ = document.querySelector.bind(document);
+      $("svg").addEventListener("click", (e) => {
+        const [x, y] = xy(e);
+        console.log(x, y);
+      });
+    </script>
+  </body>
+</html>
