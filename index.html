@@ -8,48 +8,112 @@
       * {
         box-sizing: border-box;
       }
-      :root {
-        --primary: #e83c91;
-        --secondary: #ff8fb7;
-        --accent: #f8f4ec;
-        --base: #43334c;
-      }
-      html,
       body {
         margin: 0;
         padding: 0;
-        background-color: var(--base);
-        color: var(--accent);
+        background-color: snow;
         min-height: 100dvh;
         display: flex;
         justify-content: center;
       }
-      .wrap {
+      canvas {
         margin: auto;
-        width: min(100dvw, 100dvh * 4 / 3);
-        height: min(100dvh, 100dvw * 3 / 4);
-      }
-      svg {
-        width: 100%;
-        height: 100%;
-        background-color: black;
+        border: 1px solid black;
+        width: min(100dvw, 100dvh);
+        height: min(100dvh, 100dvw);
       }
     </style>
   </head>
   <body>
-    <div class="wrap">
-      <svg viewBox="0,0,4,3"></svg>
-    </div>
-    <script>
-      const xy = (event) => [
-        (4 * event.offsetX) / event.target.clientWidth,
-        (3 * event.offsetY) / event.target.clientHeight,
+    <canvas id="canvas"></canvas>
+    <script type="module">
+      const FPS = 60;
+      // グリッド列数
+      const N = 16;
+
+      // 波の速度(制約: c * dt / dh <= 1 / sqrt(2))
+      const C = 0.4;
+      // 波の減衰
+      const G = 0.01;
+
+      const dh = 1 / N;
+      const dt = 1 / FPS;
+
+      const around = (i, j) => [
+        [i - 1, j],
+        [i + 1, j],
+        [i, j - 1],
+        [i, j + 1],
       ];
-      const $ = document.querySelector.bind(document);
-      $("svg").addEventListener("click", (e) => {
-        const [x, y] = xy(e);
-        console.log(x, y);
+      const array = (n, fn) => Array.from({ length: n }, fn);
+      const range = (n) => array(n, (_, i) => i);
+      const grid = (n, fn) => array(n, () => array(n, fn));
+      const clamp = (n, min, max) => (n > max ? max : n < min ? min : n);
+      const wave2rgba = (wave) =>
+        [...wave, 1].map((c) => Math.floor(255 * Math.abs(c)));
+      const updateStates = ({ wavesPre, waves }) => ({
+        wavesPre: waves,
+        waves: waves.map((row, i) =>
+          row.map((w, j) =>
+            w.map((u, k) => {
+              const up = wavesPre[i][j][k];
+              return (
+                2 * u -
+                up +
+                Math.pow((C * dt) / dh, 2) *
+                  around(i, j).reduce(
+                    (sum, [i, j]) => sum + (waves[i]?.[j]?.[k] ?? 0),
+                    -4 * u
+                  ) -
+                G * (u - up)
+              );
+            })
+          )
+        ),
       });
+      const updateView = (ctx, { waves }) => {
+        const imageData = ctx.createImageData(N, N);
+        const flatten = waves.flat().flatMap(wave2rgba);
+        const uint8array = new Uint8ClampedArray(flatten);
+
+        imageData.data.set(uint8array);
+        ctx.putImageData(imageData, 0, 0);
+      };
+      const loop = (fn, interval = 0) => {
+        if (interval > 0) {
+          setInterval(fn, interval);
+          return;
+        }
+        const f = () => {
+          fn();
+          requestAnimationFrame(f);
+        };
+        requestAnimationFrame(f);
+      };
+      const canvasOnClick = (e, states) => {
+        const [j, i] = [
+          e.offsetX / e.target.clientWidth,
+          e.offsetY / e.target.clientHeight,
+        ].map((v) => Math.floor(v * N));
+        states.waves[i][j] = [1, 1, 1];
+        return states;
+      };
+      const main = () => {
+        canvas.width = canvas.height = N;
+        let states = {
+          wavesPre: grid(N, () => [0, 0, 0]),
+          waves: grid(N, () => [0, 0, 0]),
+        };
+        const ctx = canvas.getContext("2d");
+        canvas.addEventListener(
+          "click",
+          (e) => (states = canvasOnClick(e, states))
+        );
+
+        loop(() => updateView(ctx, states));
+        loop(() => (states = updateStates(states)), 1000 / FPS);
+      };
+      main();
     </script>
   </body>
 </html>
